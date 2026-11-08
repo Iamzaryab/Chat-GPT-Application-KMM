@@ -1,46 +1,19 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    kotlin(KotlinPlugins.multiplatform)
-    kotlin(KotlinPlugins.cocoapods)
-    kotlin(KotlinPlugins.serialization) version Kotlin.version
-    id(Plugins.androidLibrary)
-
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android.library)
 }
-version = Application.versionName
 
-android {
-    namespace = "com.z.chatapplication"
-    compileSdk = Application.compileSdk
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = Application.minSdk
-        targetSdk = Application.targetSdk
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    configurations {
-        create("androidTestApi")
-        create("androidTestDebugApi")
-        create("androidTestReleaseApi")
-        create("testApi")
-        create("testDebugApi")
-        create("testReleaseApi")
-    }
-}
+version = "1.0"
 
 kotlin {
-
-    android()
-//    val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget =
-//        if (System.getenv("SDK_NAME")?.startsWith("iphoneos") == true)
-//            ::iosArm64
-//        else
-//            ::iosX64
-//
-//    iosTarget("ios") {}
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     listOf(
         iosX64(),
@@ -52,54 +25,35 @@ kotlin {
         }
     }
 
+    compilerOptions {
+        // expect/actual classes are used for BuildConfig and Logger.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     sourceSets {
-
-        val ktorVersion = "2.2.2"
-        /**
-         * Common Dependencies
-         */
-        val commonMain by getting {
-            dependencies {
-                implementation("io.ktor:ktor-client-core:$ktorVersion")
-                implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-
-//                implementation(Ktor.core)
-//                implementation(Ktor.contentNegotiation)
-//                implementation(Ktor.kotlinxJson)
-//                implementation(Kotlinx.datetime)nbn
-            }
+        commonMain.dependencies {
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.coroutines.core)
         }
-
-        /**
-         * ANDROID Dependencies
-         */
-        val androidMain by getting {
-            dependencies {
-                implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
-//                implementation(Ktor.android)
-            }
-
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
-
-        /**
-         * IOS Dependencies
-         */
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
-            dependencies {
-                implementation("io.ktor:ktor-client-darwin:$ktorVersion")
-
-            }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
 
-
+android {
+    namespace = "com.z.chatapplication"
+    compileSdk = 35
+    defaultConfig {
+        minSdk = 24
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+}
