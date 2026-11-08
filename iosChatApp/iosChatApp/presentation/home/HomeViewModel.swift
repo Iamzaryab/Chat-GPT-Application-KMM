@@ -21,6 +21,7 @@ class HomeViewModel:ObservableObject{
     
     
     private let remoteConfig = RemoteConfig.remoteConfig()
+    private var jobs: [Kotlinx_coroutines_coreJob] = []
 //    var categories:[shared.Category]
 //    var templates:[shared.Template]
     
@@ -38,8 +39,13 @@ class HomeViewModel:ObservableObject{
         
     }
     
+    deinit {
+        jobs.forEach { $0.cancel(cause: nil) }
+    }
+    
     func fetchConfig() {
-        self.remoteConfig.fetch() { (status, error) -> Void in
+        self.remoteConfig.fetch() { [weak self] (status, error) -> Void in
+            guard let self = self else { return }
             if status == .success {
                 self.remoteConfig.activate()
                 let strTemplates = self.remoteConfig.configValue(forKey: "templates").stringValue ?? ""
@@ -47,8 +53,9 @@ class HomeViewModel:ObservableObject{
                 let strConfig = self.remoteConfig.configValue(forKey: "config").stringValue ?? ""
                 self.onTriggerEvent(event: HomeEvents.LoadData(templates: strTemplates, categories: strCategories, config: strConfig))
             } else {
-                print("Config not fetched")
-                print("Error: \(error?.localizedDescription ?? "No error available.")")
+                // Stop the shimmer instead of loading forever.
+                self.updateState(isLoading: false)
+                self.logger.log(msg: "Config not fetched: \(error?.localizedDescription ?? "No error available.")")
             }
             
         }
@@ -73,7 +80,8 @@ class HomeViewModel:ObservableObject{
         filteredTemplates:[Template]? = nil,
         selectedCategory: shared.Category? = nil,
         categories: [shared.Category]? = nil,
-        templates: [Template]? = nil
+        templates: [Template]? = nil,
+        config: Config? = nil
     ){
         let currentState = (self.state.copy() as! HomeState)
         self.state = self.state.doCopy(
@@ -81,70 +89,57 @@ class HomeViewModel:ObservableObject{
             filteredTemplates: filteredTemplates ?? currentState.filteredTemplates ,
             selectedCategory: selectedCategory ?? currentState.selectedCategory,
             categories: categories ?? currentState.categories,
-            templates: templates ?? currentState.templates
+            templates: templates ?? currentState.templates,
+            config: config ?? currentState.config
         )
     }
     
     private func loadData(strTemplates: String,strCategories: String, strConfig: String){
-        do{
-            try loadData.execute(
-                templates: strTemplates,
-                categories: strCategories,
-                config: strConfig).collectCommon(
-                    coroutineScope: nil,
-                    callback:{ dataState in
-                        if(dataState != nil){
-                            let data = dataState?.data
-                            let message = dataState?.message
-                            let loading = dataState?.isLoading
-                            
-                            self.updateState(isLoading: loading)
-                            
-                            if(data != nil){
-                                
-                                self.setData(remoteConfigValues: data as! RemoteConfigValues)
-                            }else{
-                                self.logger.log(msg: "Data is null")
-                            }
-                        }
+        let job = loadData.execute(
+            templates: strTemplates,
+            categories: strCategories,
+            config: strConfig).collectCommon(
+                coroutineScope: nil,
+                callback:{ [weak self] dataState in
+                    guard let self = self, let dataState = dataState else { return }
+                    self.updateState(isLoading: dataState.isLoading)
+                    if(dataState.isLoading){ return }
+                    
+                    if let data = dataState.data {
+                        self.setData(remoteConfigValues: data)
+                    }else{
+                        self.logger.log(msg: "Could not load templates: \(dataState.message ?? "unknown error")")
                     }
-                )
-            
-            
-        }catch{
-            self.logger.log(msg: "\(error)")
-        }
+                }
+            )
+        jobs.append(job)
     }
     
     private func setData(remoteConfigValues: RemoteConfigValues){
         self.updateState(
             isLoading: false,
             filteredTemplates: remoteConfigValues.templates,
-            selectedCategory: remoteConfigValues.categories[0],
+            selectedCategory: remoteConfigValues.categories.first,
             categories: remoteConfigValues.categories,
-            templates: remoteConfigValues.templates
+            templates: remoteConfigValues.templates,
+            config: remoteConfigValues.config
         )
         
     }
     private func onSeletedCategory(category: shared.Category){
         self.updateState(selectedCategory: category)
         
-        do{
-            try changeCategory.execute(category: category, templates: self.state.templates)
-                .collectCommon(coroutineScope: nil, callback:{
-                    datastate in if( datastate != nil){
-                        self.updateState(isLoading: datastate?.isLoading)
-                        
-                        if(datastate?.data != nil){                            
-                            self.updateState(filteredTemplates: datastate?.data as! [Template])
-                        }
-                    }
+        let job = changeCategory.execute(category: category, templates: self.state.templates)
+            .collectCommon(coroutineScope: nil, callback:{ [weak self] datastate in
+                guard let self = self, let datastate = datastate else { return }
+                self.updateState(isLoading: datastate.isLoading)
+                if let filtered = datastate.data as? [Template] {
+                    self.updateState(filteredTemplates: filtered)
+                } else if let error = datastate.message {
+                    self.logger.log(msg: error)
                 }
-            )
-            
-        }catch{
-            logger.log(msg: error as! String)
-        }
+            })
+        jobs.append(job)
     }
     private func doNothing(){
         

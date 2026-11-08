@@ -16,7 +16,7 @@ class ChatMapper(
             created = model.created,
             model = model.model,
             choices = choiceMapper.toDomainList(model.choices),
-            usage = usageMapper.mapToDomainModel(model.usage)
+            usage = model.usage?.let { usageMapper.mapToDomainModel(it) }
         )
     }
 
@@ -27,7 +27,7 @@ class ChatMapper(
             created = domainModel.created,
             model = domainModel.model,
             choices = choiceMapper.fromDomainList(domainModel.choices),
-            usage = usageMapper.mapFromDomainModel(domainModel.usage)
+            usage = domainModel.usage?.let { usageMapper.mapFromDomainModel(it) }
         )
 
     }

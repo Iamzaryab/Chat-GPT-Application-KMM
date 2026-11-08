@@ -22,6 +22,6 @@ data class ChatDto(
     val choices: List<ChoiceDto>,
 
     @SerialName("usage")
-    val usage: UsageDto
+    val usage: UsageDto? = null
 
 )

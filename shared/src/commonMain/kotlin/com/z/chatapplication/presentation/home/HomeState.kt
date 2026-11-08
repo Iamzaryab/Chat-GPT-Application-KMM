@@ -1,6 +1,7 @@
 package com.z.chatapplication.presentation.home
 
 import com.z.chatapplication.domain.model.Category
+import com.z.chatapplication.domain.model.Config
 import com.z.chatapplication.domain.model.Template
 
 data class HomeState(
@@ -8,13 +9,15 @@ data class HomeState(
     val filteredTemplates: List<Template>,
     val selectedCategory: Category = Category(title = "all"),
     val categories: List<Category>,
-    val templates: List<Template>
+    val templates: List<Template>,
+    val config: Config?
 ) {
     constructor() : this(
         isLoading = false,
         filteredTemplates = listOf(),
         selectedCategory = Category(title = "all"),
         templates = listOf(),
-        categories = listOf()
+        categories = listOf(),
+        config = null
     )
 }

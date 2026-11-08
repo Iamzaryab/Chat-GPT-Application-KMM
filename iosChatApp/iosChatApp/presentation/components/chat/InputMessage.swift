@@ -34,7 +34,7 @@ struct InputMessage: View {
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.theme.messageMe))
                 .padding(EdgeInsets(top: 4, leading: 10, bottom: 4, trailing: 0))
             Button(action: {
-                onTriggerEvent(ChatEvents.GotMessage(message: query, from: 0))
+                onTriggerEvent(ChatEvents.GotMessage(message: query, from: Message.companion.FROM_USER))
                 query = ""
             }){
                 Image(!btnActive ? "send_btn_active" : "send_btn_inactive" )

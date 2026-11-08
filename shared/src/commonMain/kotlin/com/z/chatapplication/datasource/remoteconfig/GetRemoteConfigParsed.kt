@@ -13,27 +13,29 @@ class GetRemoteConfigParsed(
     private val configMapper: ConfigMapper
 ) {
 
-    fun getRemoteConfigValues(templates: String, categories: String): RemoteConfigValues {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun getRemoteConfigValues(templates: String, categories: String, config: String): RemoteConfigValues {
         return remoteConfigValueMapper.mapToDomainModel(
             RemoteConfigValuesDto(
-                Json {
-                    ignoreUnknownKeys = true
-                }.decodeFromString<TemplatesDto>(templates).templatesDto,
-                Json {
-                    ignoreUnknownKeys = true
-                }.decodeFromString<CategoriesDto>(categories).categoriesDto,
-
-                )
-        )
+                json.decodeFromString<TemplatesDto>(templates).templatesDto,
+                json.decodeFromString<CategoriesDto>(categories).categoriesDto,
+            )
+        ).copy(config = getConfigParsedOrNull(config))
     }
 
     fun getConfigParsed(config: String): Config {
-        return configMapper.mapToDomainModel(
-            Json {
-                ignoreUnknownKeys = true
-            }.decodeFromString<ConfigDto>(config)
+        return configMapper.mapToDomainModel(json.decodeFromString<ConfigDto>(config))
+    }
 
-        )
+    /** A missing or malformed config must not stop the templates from loading. */
+    private fun getConfigParsedOrNull(config: String): Config? {
+        if (config.isBlank()) return null
+        return try {
+            getConfigParsed(config)
+        } catch (e: SerializationException) {
+            null
+        }
     }
 
 }

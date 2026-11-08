@@ -1,7 +1,7 @@
 package com.z.chatapplication.interactors.home
 
-import com.codingwithmitch.food2forkkmm.domain.util.CommonFlow
-import com.codingwithmitch.food2forkkmm.domain.util.asCommonFlow
+import com.z.chatapplication.domain.util.CommonFlow
+import com.z.chatapplication.domain.util.asCommonFlow
 import com.z.chatapplication.datasource.remoteconfig.GetRemoteConfigParsed
 import com.z.chatapplication.domain.model.RemoteConfigValues
 import com.z.chatapplication.domain.util.DataState
@@ -24,7 +24,8 @@ class LoadData(
                     message = null,
                     data = getRemoteConfigParsed.getRemoteConfigValues(
                         templates = templates,
-                        categories = categories
+                        categories = categories,
+                        config = config
                     )
                 )
             )

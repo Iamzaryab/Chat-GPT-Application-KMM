@@ -5,12 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ChoiceDto(
-
-    @SerialName("text")
-    val text: String,
     @SerialName("index")
     val index: Int,
+    @SerialName("message")
+    val message: ChatMessageDto,
     @SerialName("finish_reason")
-    val finish_reason: String
-
+    val finish_reason: String? = null
 )

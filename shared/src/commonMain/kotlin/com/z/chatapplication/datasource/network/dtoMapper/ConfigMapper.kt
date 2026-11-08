@@ -10,7 +10,8 @@ class ConfigMapper : DomainMapper<ConfigDto, Config> {
         return Config(
             initialCredits = model.initial_credits,
             creditDeduction = model.credit_deduction,
-            apiKey = model.api_key
+            apiKey = model.api_key,
+            model = model.model
         )
     }
 
@@ -18,7 +19,8 @@ class ConfigMapper : DomainMapper<ConfigDto, Config> {
         return ConfigDto(
             initial_credits = domainModel.initialCredits,
             credit_deduction = domainModel.creditDeduction,
-            api_key = domainModel.apiKey
+            api_key = domainModel.apiKey,
+            model = domainModel.model
         )
     }
 }

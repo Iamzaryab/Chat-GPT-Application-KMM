@@ -7,6 +7,6 @@ data class Chat(
     val created: Long,
     val model: String,
     val choices: List<Choice>,
-    val usage: Usage
+    val usage: Usage?
 
 )

@@ -6,9 +6,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ConfigDto(
     @SerialName("initial_credits")
-    val initial_credits: Int,
+    val initial_credits: Int = 0,
     @SerialName("credit_deduction")
-    val credit_deduction: Int,
+    val credit_deduction: Int = 0,
     @SerialName("api_key")
-    val api_key: String
+    val api_key: String = "",
+    @SerialName("model")
+    val model: String? = null
 )

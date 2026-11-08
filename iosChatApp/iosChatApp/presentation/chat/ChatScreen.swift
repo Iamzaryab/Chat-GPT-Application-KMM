@@ -13,12 +13,14 @@ struct ChatScreen: View {
     private let question: String
     private let networkModule: NetworkModule
     
-    @ObservedObject var viewModel: ChatViewModel
-    init(question: String) {
+    @StateObject private var viewModel: ChatViewModel
+    init(question: String, config: Config?) {
         self.question = question
         networkModule = NetworkModule()
-        self.viewModel = ChatViewModel(queryChat: QueryChat(chatService: networkModule.chatService))
-        viewModel.onTriggerEvent(event: ChatEvents.GotMessage(message: question, from: 1))
+        let viewModel = ChatViewModel(queryChat: QueryChat(chatService: networkModule.chatService), config: config)
+        viewModel.onTriggerEvent(event: ChatEvents.GotMessage(message: question, from: Message.companion.FROM_ASSISTANT))
+        // StateObject keeps the conversation (and any request in flight) when SwiftUI rebuilds this view.
+        _viewModel = StateObject(wrappedValue: viewModel)
         UIScrollView.appearance().keyboardDismissMode = .onDrag
     }
     var body: some View {
@@ -29,7 +31,7 @@ struct ChatScreen: View {
                     VStack(spacing: 8){
                         ForEach(viewModel.chatState.messages,id: \.self){
                             message in
-                            if(message.from == 0){
+                            if(message.from == Message.companion.FROM_USER){
                                 MessageTo(message: message.message)
                             }else{
                                 MessageFrom(message: message.message,shouldAnimate: true)

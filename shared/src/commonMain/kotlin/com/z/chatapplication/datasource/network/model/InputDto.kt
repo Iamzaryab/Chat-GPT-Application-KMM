@@ -1,14 +1,15 @@
 package com.z.chatapplication.datasource.network.model
 
 import kotlinx.serialization.SerialName
-@kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializable
+
+/** Request body for POST /v1/chat/completions. */
+@Serializable
 data class InputDto(
     @SerialName("model")
     val model: String,
-    @SerialName("prompt")
-    val prompt: String,
-    @SerialName("temperature")
-    val temperature: Int,
-    @SerialName("max_tokens")
-    val max_tokens: Int
+    @SerialName("messages")
+    val messages: List<ChatMessageDto>,
+    @SerialName("max_completion_tokens")
+    val max_completion_tokens: Int
 )

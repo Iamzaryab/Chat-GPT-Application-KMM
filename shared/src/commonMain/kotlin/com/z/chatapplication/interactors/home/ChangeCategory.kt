@@ -1,7 +1,7 @@
 package com.z.chatapplication.interactors.home
 
-import com.codingwithmitch.food2forkkmm.domain.util.CommonFlow
-import com.codingwithmitch.food2forkkmm.domain.util.asCommonFlow
+import com.z.chatapplication.domain.util.CommonFlow
+import com.z.chatapplication.domain.util.asCommonFlow
 import com.z.chatapplication.domain.model.Category
 import com.z.chatapplication.domain.model.Template
 import com.z.chatapplication.domain.util.DataState
@@ -17,7 +17,8 @@ class ChangeCategory{
             emit(
                 DataState.data<List<Template>>(
                     message = null,
-                    data = if(category.title == "all") templates else templates.filter { s -> s.category == category.title })
+                    data = if (category.title.equals("all", ignoreCase = true)) templates
+                    else templates.filter { it.category.equals(category.title, ignoreCase = true) })
             )
         } catch (e: Exception) {
             emit(DataState.error(e.message ?: "Unknown Error"))

@@ -16,17 +16,18 @@ struct HomeScreen: View {
     private let remoteConfigModule: RemoteConfigModule
     private let loadDataModule: LoadDataModule
     private let changeCategoryModule: ChangeCategoryModule    
-    @ObservedObject var viewModel: HomeViewModel
+    @StateObject private var viewModel: HomeViewModel
     
     
     init(remoteConfigModule: RemoteConfigModule) {
         self.remoteConfigModule = remoteConfigModule
         self.loadDataModule = LoadDataModule(getRemoteConfigParsed: remoteConfigModule.getRemoteConfigParsed)
         self.changeCategoryModule = ChangeCategoryModule()
-        self.viewModel = HomeViewModel(
-            loadData: self.loadDataModule.loadData,
+        let viewModel = HomeViewModel(
+            loadData: loadDataModule.loadData,
             changeCategory: changeCategoryModule.changeCategory)
-        self.viewModel.updateState(isLoading: true)
+        viewModel.updateState(isLoading: true)
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
     
     var body: some View {
@@ -56,7 +57,7 @@ struct HomeScreen: View {
                             VStack(spacing: 10){
                                 ForEach(viewModel.state.filteredTemplates,id: \.self){
                                     template in
-                                    NavigationLink(destination: ChatScreen(question: template.question)){
+                                    NavigationLink(destination: LazyView { ChatScreen(question: template.question, config: viewModel.state.config) }){
                                         TemplateCard(title: template.title, description: template.description_ )
                                     }.buttonStyle(PlainButtonStyle())
                                     
@@ -73,4 +74,12 @@ struct HomeScreen: View {
         }
     }
         
+}
+
+
+/// Builds the destination only when the link is opened, not once per card on every render.
+struct LazyView<Content: View>: View {
+    private let build: () -> Content
+    init(_ build: @escaping () -> Content) { self.build = build }
+    var body: Content { build() }
 }
